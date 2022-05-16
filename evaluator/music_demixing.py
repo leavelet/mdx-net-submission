@@ -10,6 +10,7 @@ import signal
 from contextlib import contextmanager
 from os import listdir
 from os.path import isfile, join
+from colored import fg, bg, attr
 
 import soundfile as sf
 import numpy as np
@@ -126,8 +127,11 @@ class MusicDemixingPredictor:
 
         music_names = self.get_all_music_names()
      
+        total_music = len(music_names)
+        total_music_done = 0
         for music_name in music_names:
-            print("now music:", music_name)
+            print(f"{bg('blue')}{attr('bold')}current music: {music_name}.{attr('reset')}",
+                    f"{bg('dark_green')}{attr('bold')}[{total_music_done}/{total_music}] {round(total_music_done/total_music*100,2)}%{attr('reset')}")
             with time_limit(self.inference_per_music_timeout):
                 self.prediction(mixture_file_path=self.get_music_file_location(music_name),
                                 bass_file_path=self.get_music_file_location(music_name, "bass"),
@@ -138,6 +142,8 @@ class MusicDemixingPredictor:
                 
             if not self.verify_results(music_name):
                 raise Exception("verification failed, demixed files not found.")
+            
+            total_music_done += 1
         aicrowd_helpers.execution_success()
 
     def run(self):
