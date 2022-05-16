@@ -127,7 +127,7 @@ class MusicDemixingPredictor:
         music_names = self.get_all_music_names()
      
         for music_name in music_names:
-            print("now music:",self.get_music_file_location(music_name))
+            print("now music:", music_name)
             with time_limit(self.inference_per_music_timeout):
                 self.prediction(mixture_file_path=self.get_music_file_location(music_name),
                                 bass_file_path=self.get_music_file_location(music_name, "bass"),

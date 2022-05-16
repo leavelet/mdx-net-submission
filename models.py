@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from time import sleep
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -65,12 +66,13 @@ class Conv_TDF_net_trim(nn.Module):
         self.window = torch.hann_window(window_length=self.n_fft, periodic=True).to(device)
         self.target_name = target_name
         self.blender = 'blender' in model_name
+        self.device = device
         
         out_c = dim_c*4 if target_name=='*' else dim_c
         in_c = dim_c*2 if self.blender else dim_c
         #out_c = dim_c*2 if self.blender else dim_c
         self.freq_pad = torch.zeros([1, out_c, self.n_bins-self.dim_f, self.dim_t]).to(device)
-  
+
         self.n = L//2
         if load:
             
@@ -140,21 +142,23 @@ class Conv_TDF_net_trim(nn.Module):
 
         
     def stft(self, x):
+        # print('stfting...')
         x = x.reshape([-1, self.chunk_size])
-        x = torch.stft(x, n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True)
+        x = torch.stft(x.to(self.device), n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True)
         x = x.permute([0,3,1,2])
         x = x.reshape([-1,2,2,self.n_bins,self.dim_t]).reshape([-1,dim_c,self.n_bins,self.dim_t])
+        # print('done')
         return x[:,:,:self.dim_f]
 
     def istft(self, x, freq_pad=None):
+        # print('istfting...')
         freq_pad = self.freq_pad.repeat([x.shape[0],1,1,1]) if freq_pad is None else freq_pad
-        freq_pad = freq_pad.to(device)
-        x = x.to(device)
-        x = torch.cat([x, freq_pad], -2)
+        x = torch.cat([x.to(self.device), freq_pad.to(self.device)], -2)
         c = 4*2 if self.target_name=='*' else 2
         x = x.reshape([-1,c,2,self.n_bins,self.dim_t]).reshape([-1,2,self.n_bins,self.dim_t])
         x = x.permute([0,2,3,1])
         x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True)
+        # print('done')
         return x.reshape([-1,c,self.chunk_size])
         
     
