@@ -144,7 +144,7 @@ class Conv_TDF_net_trim(nn.Module):
     def stft(self, x):
         # print('stfting...')
         x = x.reshape([-1, self.chunk_size])
-        x = torch.stft(x.to(self.device), n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True)
+        x = torch.stft(x.to(self.device), n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True, return_complex=False)
         x = x.permute([0,3,1,2])
         x = x.reshape([-1,2,2,self.n_bins,self.dim_t]).reshape([-1,dim_c,self.n_bins,self.dim_t])
         # print('done')
@@ -157,7 +157,7 @@ class Conv_TDF_net_trim(nn.Module):
         c = 4*2 if self.target_name=='*' else 2
         x = x.reshape([-1,c,2,self.n_bins,self.dim_t]).reshape([-1,2,self.n_bins,self.dim_t])
         x = x.permute([0,2,3,1])
-        x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True)
+        x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop, window=self.window, center=True, return_complex=False)
         # print('done')
         return x.reshape([-1,c,self.chunk_size])
         
