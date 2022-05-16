@@ -44,6 +44,7 @@ class Predictor(MusicDemixingPredictor):
         
     def prediction_setup(self):
         self.models = get_models(model_name, load=False, device=model_device)
+        # self.demucs = Demucs(sources=["drums", "bass", "other", "vocals"], channels=48 if '48' in demucs_name else 64)
         self.demucs = Demucs(sources=["drums", "bass", "other", "vocals"], channels=48 if '48' in demucs_name else 64)
         self.demucs.load_state_dict(torch.load(f'model/{demucs_name}.ckpt'))
         self.demucs.eval()
@@ -51,7 +52,8 @@ class Predictor(MusicDemixingPredictor):
             self.demucs = self.demucs.to(device)
         
     def prediction(self, mixture_file_path, bass_file_path, drums_file_path, other_file_path, vocals_file_path):
-        file_paths = [bass_file_path, drums_file_path, other_file_path, vocals_file_path]      
+        # file_paths = [bass_file_path, drums_file_path, other_file_path, vocals_file_path]      
+        file_paths = [vocals_file_path]      
         mix, rate = sf.read(mixture_file_path)
         sources = self.demix(mix.T)
         for i in range(len(sources)):
@@ -59,10 +61,12 @@ class Predictor(MusicDemixingPredictor):
     
     def demix(self, mix):
         print(f"dexing_base...")
-        base_out = self.demix_base(mix)        
+        base_out = self.demix_base(mix)
         print(f"dexing_demucs...")
-        demucs_out = self.demix_demucs(mix)
-        sources = base_out * b + demucs_out * (1-b)     
+        # demucs_out = self.demix_demucs(mix)
+        demucs_out = self.demix_demucs(mix)[3:]
+        sources = base_out * b + demucs_out * (1-b)
+        print(f'sources: {sources.shape}')
         return sources
     
     def demix_base(self, mix):
@@ -128,7 +132,8 @@ class Predictor(MusicDemixingPredictor):
 model_name = 'tdf_extra'
 demucs_name = 'demucs_extra'
 
-b = np.array([[[0.5]], [[0.5]], [[0.7]], [[0.9]]])
+# b = np.array([[[0.5]], [[0.5]], [[0.7]], [[0.9]]])
+b = np.array([[[0.9]]])
 
 submission = Predictor()
 submission.run()

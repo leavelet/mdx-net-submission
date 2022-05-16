@@ -84,7 +84,8 @@ class MusicDemixingPredictor:
             return 10 * np.log10(num  / den)
 
         music_names = self.get_all_music_names()
-        instruments = ["bass", "drums", "other", "vocals"]
+        # instruments = ["bass", "drums", "other", "vocals"]
+        instruments = ["vocals"]
         scores = {}
         for music_name in music_names:
             print("Evaluating for: %s" % music_name)
@@ -178,7 +179,7 @@ class MusicDemixingPredictor:
         """
         valid = True
         valid = valid and os.path.isfile(self.get_music_file_location(music_name, "vocals"))
-        valid = valid and os.path.isfile(self.get_music_file_location(music_name, "bass"))
-        valid = valid and os.path.isfile(self.get_music_file_location(music_name, "drums"))
-        valid = valid and os.path.isfile(self.get_music_file_location(music_name, "other"))
+        # valid = valid and os.path.isfile(self.get_music_file_location(music_name, "bass"))
+        # valid = valid and os.path.isfile(self.get_music_file_location(music_name, "drums"))
+        # valid = valid and os.path.isfile(self.get_music_file_location(music_name, "other"))
         return valid
