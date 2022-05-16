@@ -40,6 +40,7 @@ class Predictor(MusicDemixingPredictor):
         sources = []
         n_sample = mix.shape[1]
         for model in self.models:
+            print(f'now target is {model.target_name}...')
             trim = model.n_fft//2
             gen_size = model.chunk_size-2*trim
             pad = gen_size - n_sample%gen_size
@@ -50,16 +51,19 @@ class Predictor(MusicDemixingPredictor):
             while i < n_sample + pad:
                 waves = np.array(mix_p[:, i:i+model.chunk_size])
                 mix_waves.append(waves)
-                i += gen_size            
-            mix_waves = torch.tensor(mix_waves, dtype=torch.float32)    
+                i += gen_size
+            mix_waves = torch.tensor(np.array(mix_waves), dtype=torch.float32).to(device)
 
             with torch.no_grad():
+                options = ort.SessionOptions()
+                options.inter_op_num_threads = 1
                 _ort = ort.InferenceSession(f'onnx/{model.target_name}.onnx')
-                tar_waves = model.istft(torch.tensor(
-                    _ort.run(None, {'input': model.stft(mix_waves).numpy()})[0]
-                ))
-                tar_signal = tar_waves[:,:,trim:-trim].transpose(0,1).reshape(2, -1).numpy()[:, :-pad]
-        
+                # TODO The following line use too much time
+                # It seems that _ort.run is using CPU
+                ort_result = _ort.run(None, {'input': model.stft(mix_waves).cpu().numpy()})[0]
+                tar_waves = model.istft(torch.tensor(ort_result))
+                tar_signal = tar_waves[:,:,trim:-trim].transpose(0,1).reshape(2, -1).cpu().numpy()[:, :-pad]
+
             sources.append(tar_signal)
         print(f"time usage (demix_base): {round(time()-start_time, 2)}s")
         return np.array(sources)

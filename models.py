@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 dim_c = 4
 k = 3
@@ -147,6 +148,8 @@ class Conv_TDF_net_trim(nn.Module):
 
     def istft(self, x, freq_pad=None):
         freq_pad = self.freq_pad.repeat([x.shape[0],1,1,1]) if freq_pad is None else freq_pad
+        freq_pad = freq_pad.to(device)
+        x = x.to(device)
         x = torch.cat([x, freq_pad], -2)
         c = 4*2 if self.target_name=='*' else 2
         x = x.reshape([-1,c,2,self.n_bins,self.dim_t]).reshape([-1,2,self.n_bins,self.dim_t])
