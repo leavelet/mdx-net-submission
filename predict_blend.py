@@ -8,7 +8,8 @@ from models import get_models
 import onnxruntime as ort
 from time import time, sleep
 
-device = torch.device('cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(f'using devide {device}')
 
 class Predictor(MusicDemixingPredictor):
         
@@ -26,7 +27,9 @@ class Predictor(MusicDemixingPredictor):
             sf.write(file_paths[i], sources[i].T, rate)
     
     def demix(self, mix):
+        print(f"dexing_demucs...")
         demucs_out = self.demix_demucs(mix)
+        print(f"dexing_base...")
         base_out = self.demix_base(mix)        
         sources = base_out * b + demucs_out * (1-b)     
         return sources
@@ -57,7 +60,7 @@ class Predictor(MusicDemixingPredictor):
                 tar_signal = tar_waves[:,:,trim:-trim].transpose(0,1).reshape(2, -1).numpy()[:, :-pad]
         
             sources.append(tar_signal)
-        print(time()-start_time)
+        print(f"time usage (demix_base): {round(time()-start_time, 2)}s")
         return np.array(sources)
     
     def demix_demucs(self, mix):
@@ -71,7 +74,7 @@ class Predictor(MusicDemixingPredictor):
             
         sources = (sources * ref.std() + ref.mean()).cpu().numpy()
         sources[[0,1]] = sources[[1,0]]
-        print(time() - start_time)
+        print(f"time usage (demix_demucs): {round(time()-start_time, 2)}s")
         return sources
         
 
