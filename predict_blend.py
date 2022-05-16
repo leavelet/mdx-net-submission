@@ -18,6 +18,7 @@ class Predictor(MusicDemixingPredictor):
         self.demucs = Demucs(sources=["drums", "bass", "other", "vocals"], channels=48 if '48' in demucs_name else 64)
         self.demucs.load_state_dict(torch.load(f'model/{demucs_name}.ckpt'))
         self.demucs.eval()
+        self.demucs = self.demucs.to(device)
         
     def prediction(self, mixture_file_path, bass_file_path, drums_file_path, other_file_path, vocals_file_path):
         file_paths = [bass_file_path, drums_file_path, other_file_path, vocals_file_path]      
@@ -68,6 +69,7 @@ class Predictor(MusicDemixingPredictor):
         mix = torch.tensor(mix, dtype=torch.float32)
         ref = mix.mean(0)        
         mix = (mix - ref.mean()) / ref.std()
+        mix = mix.to(device)
         
         with torch.no_grad():
             sources = apply_model(self.demucs, mix, split=True, overlap=0.5)
