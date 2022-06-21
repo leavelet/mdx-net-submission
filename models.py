@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from time import sleep
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(f'using devide {device}')
 
 dim_c = 4
 k = 3

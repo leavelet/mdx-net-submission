@@ -11,7 +11,7 @@ from time import time, sleep
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f'using devide {device}')
 
-ONNX_MODE = "f16"   # select from "f32" "f16" and "cpu"
+ONNX_MODE = "cpu"   # select from "f32" "f16" and "cpu"
 
 if ONNX_MODE == "f32":
     ort_providers = [
@@ -34,7 +34,10 @@ elif ONNX_MODE == "cpu":
     ort_providers = [
         'CPUExecutionProvider'
     ]
-    model_device = "cuda:0"
+    if torch.cuda.is_available() :
+        model_device = "cpu"
+    else:
+        model_device = "cuda:0"
 else:
     raise Exception(f"unknown ONNX_MODE: {ONNX_MODE}")
 print(f'ONNX_MODE: {ONNX_MODE}')
@@ -89,7 +92,8 @@ class Predictor(MusicDemixingPredictor):
             mix_waves = torch.tensor(np.array(mix_waves), dtype=torch.float32)
 
             with torch.no_grad():
-                torch.cuda.empty_cache()    # clean GPU memory cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()    # clean GPU memory cache
                 options = ort.SessionOptions()
                 options.inter_op_num_threads = 1
 
@@ -124,7 +128,8 @@ class Predictor(MusicDemixingPredictor):
             
         sources = (sources * ref.std() + ref.mean()).cpu().numpy()
         sources[[0,1]] = sources[[1,0]]
-        torch.cuda.empty_cache()    # clean GPU memory cache
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()    # clean GPU memory cache
         print(f"time usage (demix_demucs): {round(time()-start_time, 2)}s")
         return sources
         
