@@ -35,9 +35,9 @@ elif ONNX_MODE == "cpu":
         'CPUExecutionProvider'
     ]
     if torch.cuda.is_available() :
-        model_device = "cpu"
-    else:
         model_device = "cuda:0"
+    else:
+        model_device = "cpu"
 else:
     raise Exception(f"unknown ONNX_MODE: {ONNX_MODE}")
 print(f'ONNX_MODE: {ONNX_MODE}')
